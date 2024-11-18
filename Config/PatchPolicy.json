@@ -1,0 +1,12 @@
+{
+    "PatchPolicy": {
+        "MaintenanceWindowStart": "22:00",
+        "MaintenanceWindowEnd": "02:00",
+        "RollbackThresholdDays": 7,
+        "UpdateFrequency": "Weekly",
+        "ApprovedPatches": [
+            "KB1234567",
+            "KB9876543"
+        ]
+    }
+}
