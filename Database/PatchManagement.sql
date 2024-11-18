@@ -1,4 +1,4 @@
--- Create a table to store updates
+-- Table to store updates
 CREATE TABLE Updates (
     Id INT PRIMARY KEY IDENTITY,
     Title NVARCHAR(255),
@@ -7,20 +7,33 @@ CREATE TABLE Updates (
     Status NVARCHAR(50)
 );
 
--- Create a table for compliance reporting
+CREATE TABLE Logs (
+    Id INT PRIMARY KEY IDENTITY,
+    Timestamp DATETIME NOT NULL,
+    LogType NVARCHAR(50),
+    LogLevel NVARCHAR(20),
+    Message NVARCHAR(MAX)
+);
+
+
+-- Table for compliance reporting
 CREATE TABLE ComplianceReports (
     Id INT PRIMARY KEY IDENTITY,
-    UpdateId INT,
+    UpdateId INT NOT NULL,
     ComplianceStatus NVARCHAR(50),
-    ReportDate DATETIME,
+    ReportDate DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (UpdateId) REFERENCES Updates(Id)
 );
 
--- Create a table for rollback actions
+-- Table for rollback actions
 CREATE TABLE RollbackLogs (
     Id INT PRIMARY KEY IDENTITY,
-    UpdateId INT,
-    RollbackDate DATETIME,
+    UpdateId INT NOT NULL,
+    RollbackDate DATETIME DEFAULT GETDATE(),
     Status NVARCHAR(50),
     FOREIGN KEY (UpdateId) REFERENCES Updates(Id)
 );
+
+-- Index for faster queries
+CREATE INDEX idx_UpdateTitle ON Updates (Title);
+CREATE INDEX idx_RollbackDate ON RollbackLogs (RollbackDate);

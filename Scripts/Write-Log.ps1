@@ -34,5 +34,11 @@ function Write-Log {
     $LogEntry = "$Timestamp [$Level] $Message"
     $LogFilePath = if ($LogType -eq "Rollback") { $RollbackLogPath } else { $LogPath }
     Add-Content -Path "$LogFilePath\$(if ($LogType -eq 'Rollback') {'rollback'} else {'patch'})_$(Get-Date -Format 'yyyyMMdd').log" -Value $LogEntry
+     # Write log entry to SQL database
+     $query = @"
+     INSERT INTO Logs (Timestamp, LogType, LogLevel, Message)
+     VALUES ('$Timestamp', '$LogType', '$Level', '$Message');
+"@
+    Invoke-Sqlcmd -Query $query -ConnectionString $connectionString
     Write-Host $LogEntry
 }

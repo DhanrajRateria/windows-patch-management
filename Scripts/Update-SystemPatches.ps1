@@ -24,6 +24,24 @@ function Get-SystemUpdates {
         Write-Log "Initializing Windows Update Scan" -LogType "Patch"
         $Updates = Get-WindowsUpdate -MicrosoftUpdate -ErrorAction Stop
         Write-Log "Found $($Updates.Count) available updates" -LogType "Patch"
+
+        foreach ($Update in $Updates) {
+            # Using parameterized queries to avoid SQL injection
+            $query = @"
+                INSERT INTO Updates (Title, Description, InstallDate, Status)
+                VALUES (@Title, @Description, NULL, 'Pending');
+"@
+            
+            # Define SQL parameters
+            $params = @{
+                Title       = $Update.Title
+                Description = $Update.Description
+            }
+        
+            # Execute the SQL query with parameters
+            Invoke-Sqlcmd -Query $query -ConnectionString $connectionString -Variable $params
+        }
+
         return $Updates
     }
     catch {
@@ -50,6 +68,17 @@ function Install-SystemUpdates {
         
         foreach ($Result in $InstallResults) {
             Write-Log "Update Result: $($Result.Title) - Status: $($Result.Status)" -LogType "Patch"
+        }
+        foreach ($Result in $InstallResults) {
+            $status = if ($Result.Status -eq "Success") { "Installed" } else { "Failed" }
+            $query = @"
+            UPDATE Updates
+            SET InstallDate = GETDATE(), Status = '$status'
+            WHERE Title = '$($Result.Title)';
+"@
+            Invoke-Sqlcmd -Query $query -ConnectionString $connectionString
+
+            Write-Log "Update Result: $($Result.Title) - Status: $status" -LogType "Patch"
         }
 
         Write-Log "Patch installation completed" -LogType "Patch" -Level "SUCCESS"

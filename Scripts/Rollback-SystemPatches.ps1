@@ -46,6 +46,14 @@ function Uninstall-WindowsUpdates {
         foreach ($Update in $UpdatesToRollback) {
             Write-Log "Attempting to uninstall: $($Update.Title)" -LogType "Rollback"
             $Update | Remove-WindowsUpdate -Confirm:$false
+             # Log rollback action to SQL
+             $query = @"
+             INSERT INTO RollbackLogs (UpdateId, RollbackDate, Status)
+             SELECT Id, GETDATE(), 'Rolled Back'
+             FROM Updates
+             WHERE Title = '$($Update.Title)';
+"@
+            Invoke-Sqlcmd -Query $query -ConnectionString $connectionString
             Write-Log "Successfully rolled back: $($Update.Title)" -LogType "Rollback" -Level "SUCCESS"
         }
     }
